@@ -28,10 +28,7 @@ def check_images_folder():
             
             if file_ext in supported_extensions:
                 try:
-                    with Image.open(file_path) as img:
-                        img.verify()  # 이미지 검증
-                    
-                    # 다시 열어서 정보 확인
+                    # 이미지를 열고 기본 정보 확인
                     with Image.open(file_path) as img:
                         width, height = img.size
                         mode = img.mode
