@@ -2,6 +2,8 @@ import streamlit as st
 import random
 import os
 from pathlib import Path
+from PIL import Image
+import io
 
 # 페이지 설정
 st.set_page_config(
@@ -65,22 +67,39 @@ def get_character_name_from_filename(filename):
     """파일명에서 캐릭터 이름을 추출 (확장자 제거)"""
     return Path(filename).stem
 
+def is_valid_image(image_path):
+    """이미지 파일이 유효한지 검사"""
+    try:
+        with Image.open(image_path) as img:
+            img.verify()  # 이미지 파일 검증
+        return True
+    except Exception:
+        return False
+
 def load_images():
-    """images 폴더에서 이미지 파일들을 로드"""
+    """images 폴더에서 유효한 이미지 파일들을 로드"""
     image_folder = "images"
     if not os.path.exists(image_folder):
         st.error("images 폴더가 없습니다. images 폴더를 생성하고 캐릭터 이미지들을 넣어주세요.")
         st.stop()
     
     image_files = []
-    for ext in ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp']:
-        image_files.extend(Path(image_folder).glob(ext))
+    supported_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp']
+    
+    # 모든 파일을 확인
+    for file_path in Path(image_folder).iterdir():
+        if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
+            if is_valid_image(file_path):
+                image_files.append(str(file_path))
+            else:
+                st.warning(f"⚠️ 손상된 이미지 파일을 건너뜁니다: {file_path.name}")
     
     if len(image_files) == 0:
-        st.error("images 폴더에 이미지 파일이 없습니다.")
+        st.error("images 폴더에 유효한 이미지 파일이 없습니다.")
+        st.info("지원되는 형식: PNG, JPG, JPEG, GIF, BMP, WEBP")
         st.stop()
     
-    return [str(img) for img in image_files]
+    return image_files
 
 def initialize_game():
     """게임 초기화"""
@@ -149,10 +168,19 @@ else:
     current_image = st.session_state.images[st.session_state.current_index]
     correct_answer = get_character_name_from_filename(os.path.basename(current_image))
     
-    # 이미지 표시
+    # 이미지 표시 (안전한 방법으로)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image(current_image, caption="이 캐릭터의 이름은?", use_container_width=True)
+        try:
+            # 이미지 파일을 다시 한 번 검증
+            if os.path.exists(current_image) and is_valid_image(current_image):
+                st.image(current_image, caption="이 캐릭터의 이름은?", use_container_width=True)
+            else:
+                st.error(f"이미지를 로드할 수 없습니다: {os.path.basename(current_image)}")
+                st.info("다음 이미지로 넘어가려면 아무 답이나 입력하세요.")
+        except Exception as e:
+            st.error(f"이미지 표시 중 오류가 발생했습니다: {os.path.basename(current_image)}")
+            st.info("다음 이미지로 넘어가려면 아무 답이나 입력하세요.")
     
     # 결과 표시
     if st.session_state.show_result:
@@ -200,6 +228,7 @@ with st.sidebar:
     st.write("2. 캐릭터 이미지 파일을 넣기")
     st.write("3. 파일명이 정답이 됩니다")
     st.write("   (예: `피카츄.png` → 정답: 피카츄)")
+    st.write("4. 지원 형식: PNG, JPG, JPEG, GIF, BMP, WEBP")
     
     if st.button("🔄 게임 초기화"):
         initialize_game()
