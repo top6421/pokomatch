@@ -38,7 +38,7 @@ if st.session_state.finished:
     if st.button('다시하기'):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
 else:
     # 현재 이미지 파일명
     current_file = st.session_state.image_list[st.session_state.current_idx]
@@ -46,7 +46,7 @@ else:
     image_path = os.path.join(IMAGE_FOLDER, current_file)
     image = Image.open(image_path)
 
-    st.image(image, use_column_width=True)
+    st.image(image, use_container_width=True)
     st.write(f'문제 {st.session_state.current_idx + 1} / {len(st.session_state.image_list)}')
 
     # 정답 입력 폼
@@ -72,7 +72,7 @@ else:
                 st.session_state.current_idx += 1
                 st.session_state.answered = False
                 st.session_state.user_answer = ''
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.session_state.finished = True
-            st.experimental_rerun() 
+            st.rerun() 
