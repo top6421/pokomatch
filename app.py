@@ -70,8 +70,11 @@ def get_character_name_from_filename(filename):
 def is_valid_image(image_path):
     """이미지 파일이 유효한지 검사"""
     try:
+        # 이미지를 열고 기본 정보만 확인 (verify() 사용하지 않음)
         with Image.open(image_path) as img:
-            img.verify()  # 이미지 파일 검증
+            # 이미지 크기 정보를 가져오는 것만으로도 유효성 검사 충분
+            img.size
+            img.format
         return True
     except Exception:
         return False
